@@ -161,6 +161,20 @@ CREATE TABLE IF NOT EXISTS activity_logs (
 );
 
 -- ============================================
+-- HELPER FUNCTIONS (Security Definer - avoids RLS recursion)
+-- ============================================
+
+CREATE OR REPLACE FUNCTION public.get_user_role()
+RETURNS TEXT AS $$
+  SELECT role FROM public.users WHERE id = auth.uid();
+$$ LANGUAGE SQL SECURITY DEFINER STABLE;
+
+CREATE OR REPLACE FUNCTION public.get_user_institution_id()
+RETURNS UUID AS $$
+  SELECT institution_id FROM public.users WHERE id = auth.uid();
+$$ LANGUAGE SQL SECURITY DEFINER STABLE;
+
+-- ============================================
 -- ROW LEVEL SECURITY (RLS)
 -- ============================================
 
@@ -189,31 +203,21 @@ CREATE POLICY "Users can update own profile" ON users
 CREATE POLICY "Teachers can view students" ON users
   FOR SELECT USING (
     role = 'student' AND
-    EXISTS (
-      SELECT 1 FROM users AS teacher
-      WHERE teacher.id = auth.uid()
-      AND teacher.role = 'teacher'
-      AND teacher.institution_id = users.institution_id
-    )
+    get_user_role() = 'teacher' AND
+    institution_id = get_user_institution_id()
   );
 
 -- Proprietors can view all users in their institution
 CREATE POLICY "Proprietors can view institution users" ON users
   FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM users AS prop
-      WHERE prop.id = auth.uid()
-      AND prop.role = 'proprietor'
-      AND prop.institution_id = users.institution_id
-    )
+    get_user_role() = 'proprietor' AND
+    institution_id = get_user_institution_id()
   );
 
 -- Developers can view all users
 CREATE POLICY "Developers can view all users" ON users
   FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM users WHERE id = auth.uid() AND role = 'developer'
-    )
+    get_user_role() = 'developer'
   );
 
 -- Institutions: proprietors can manage their own
@@ -223,9 +227,7 @@ CREATE POLICY "Proprietors manage own institution" ON institutions
 -- Institutions: developers can view all
 CREATE POLICY "Developers view all institutions" ON institutions
   FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM users WHERE id = auth.uid() AND role = 'developer'
-    )
+    get_user_role() = 'developer'
   );
 
 -- Classes: teachers manage their own classes
@@ -235,9 +237,7 @@ CREATE POLICY "Teachers manage own classes" ON classes
 -- Classes: students can view classes they belong to
 CREATE POLICY "Students view enrolled classes" ON classes
   FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM users WHERE id = auth.uid() AND role = 'student'
-    )
+    get_user_role() = 'student'
   );
 
 -- Questions: teachers manage their own
