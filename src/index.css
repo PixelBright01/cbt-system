@@ -1,0 +1,33 @@
+@import "tailwindcss";
+
+@theme {
+  --color-navy-50: #f0f0ff;
+  --color-navy-100: #e0e0ff;
+  --color-navy-200: #c1c1ff;
+  --color-navy-300: #a1a1ff;
+  --color-navy-400: #8282ff;
+  --color-navy-500: #6363ff;
+  --color-navy-600: #4a4adb;
+  --color-navy-700: #3636b7;
+  --color-navy-800: #232393;
+  --color-navy-900: #1B1B3A;
+  --color-navy-950: #111128;
+
+  --color-student: #3B82F6;
+  --color-student-light: #93C5FD;
+  --color-teacher: #F97316;
+  --color-teacher-light: #FDBA74;
+  --color-proprietor: #A855F7;
+  --color-proprietor-light: #D8B4FE;
+  --color-developer: #14B8A6;
+  --color-developer-light: #5EEAD4;
+
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  body {
+    @apply bg-gray-50 text-gray-900 antialiased;
+    font-family: var(--font-sans);
+  }
+}
